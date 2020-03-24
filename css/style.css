@@ -75,6 +75,13 @@ p {
     width:40px;
     height:40px;
 }
+.navbar .brand {
+    color: lightgreen;
+    font-family: 'Raleway', sans-serif;
+    text-shadow: none;
+    font-size: 40px;
+    transform: rotate3d(1, 1, 1, 5.385427112deg);
+}
 .navbar .nav > li > a {
     text-transform:uppercase;
     line-height: auto;
