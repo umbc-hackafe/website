@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+        <a-assets>
+            <a-asset-item id="truegrit-gltf" src="models/truegrit/scene.gltf"></a-asset-item>
+        </a-assets>
+        <a-entity vive-controls="hand: left"></a-entity>
+        <a-entity vive-controls="hand: right"></a-entity>
+        <a-gltf-model position="1.00 0.897 -2.26" rotation="6.3 -40.1 -0.199" scale="0.1 0.1 0.1" src="#truegrit-gltf"></a-gltf-model>
+        
+        <a-sky color="#ECECEC"></a-sky>
+    </a-scene>
+  </body>
+</html>
