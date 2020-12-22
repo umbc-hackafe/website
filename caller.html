@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Speech Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/autobahn-js-built@0.11.1/autobahn.min.js"></script>
+  </head>
+
+  <body>
+    <input type="text" id="speechin" value="5, 4, 3, 2, 1, GO">
+    <button id="speak">Say It</button><br><br>
+    <button onclick="say('Go Live')">Go Live</button>
+    <button onclick="say('Stand by for Go Live')">Stand by for go live</button><br><br>
+    <button onclick="say('Thirty Minute Warning')">Thirty Minute Warning</button>
+    <button onclick="say('Twenty Minute Warning')">Twenty Minute Warning</button>
+    <button onclick="say('Ten Minute Warning')">Ten Minute Warning</button><br><br>
+    <button onclick="say('Ninety Seconds')">Ninety Seconds</button>
+    <button onclick="say('Thirty Seconds')">Thirty Seconds</button>
+    <button onclick="say('Ten Seconds')">Ten Seconds</button><br><br>
+    <button onclick="say('You did a. Good. Job!')">You did a good job!</button><br><br>
+    <button onclick="say('You did a. Job!')">You did a job!</button>
+    <button onclick="say('No Regerts!')">No Regerts!</button>
+    <script type="text/javascript">
+        var connection = new autobahn.Connection({url: 'wss://crossbar.hackafe.net:7778/ws', realm: 'realm1'});
+        var wamp = undefined;
+
+        function say(text) {
+            wamp.publish('com.discordspeak', [text,]);
+        }
+
+        connection.onopen = function (session) {
+            console.log("Connected");
+            wamp = session;
+            textEl = document.getElementById('speechin');
+            button = document.getElementById('speak');
+            button.addEventListener('click', function () {
+                session.publish('com.discordspeak', [textEl.value,]);
+            });
+        };
+
+        connection.open();
+    </script>
+  </body>
+</html>

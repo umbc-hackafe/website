@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+        <style>
+            body {
+                width: 500px;
+                background-color: grey;
+            }
+            .label {
+                text-align: center;
+                font-size: 40px;
+                -webkit-text-stroke-width: 1px;
+                -webkit-text-stroke-color: white;
+                font-family: 'Fredoka One', cursive;
+            }
+            .amount {
+                font-size: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="totals"></div>
+        <script type="text/javascript">
+            var goals = {};
+            var current = {};
+            const urlParams = new URLSearchParams(window.location.search);
+            var totals = urlParams.get("totals");
+            if (totals === null) {
+                totals = "all";
+            }
+            el = document.getElementById("totals");
+            var html = [];
+            const short_names = totals.split(",");
+            for (var i=0; i<short_names.length; i++) {
+                goals[short_names[i]] = {
+                    name: "Unknown",
+                    value: 0
+                };
+                current[short_names[i]] = 0;
+                html.push('<div id="'+short_names[i]+"_name"+'" class="label">Unknown</div><div id="'+short_names[i]+"_amount"+'" class="label amount">$0.00</div>');
+            }
+            html = html.join("<hr>");
+            el.innerHTML = html;
+            
+            setInterval(function() {
+                for (name in goals) {
+                    if (current[name] != goals[name].value) {
+                        var amountEl = document.getElementById(name+"_amount");
+                        var diff = goals[name].value - current[name];
+                        diff = diff / 20;
+                        if (diff < 0.01) {
+                            current[name] = goals[name].value;
+                        } else {
+                            current[name] += diff;
+                        }
+                        amountEl.innerHTML = "$"+(current[name]).toFixed(2);
+                    }
+                }
+            }, 10);
+
+            setInterval(function() {
+                fetch("totals.json?time="+Date.now()).then(response => response.json()).then(data => {
+                    for (total in data) {
+                        if (goals.hasOwnProperty(total)) {
+                            if (goals[total].name != data[total][0]) {
+                                nameel = document.getElementById(total+"_name");
+                                goals[total].name = data[total][0];
+                                nameel.innerHTML = goals[total].name;
+                            }
+                            goals[total].value = data[total][3];
+                        }
+                    }
+                });
+            }, 1000);
+        </script>
+    </body>
+</html>

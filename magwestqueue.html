@@ -1,0 +1,218 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Playback Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/autobahn-js-built@0.11.1/autobahn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.0/progressbar.min.js"></script>
+  </head>
+  <body>
+    <h1 id="currentsource" style="font-size: 80px">Loading...</h1>
+    <h2 id="preview" style="font-size: 40px">Please Click Connect.</h2>
+    <h2 id="currenttime" style="font-size: 40px"></h2>
+    <div class="progress" id="progress" height="100px"></div>
+    <button id="connect">Connect to server</button><br>
+    <h1 id="notfound" style="display: none">Video not found.</h1>
+    <video id="program" src="" width="80%"></video>
+
+    <script type="application/javascript">
+        var connection = new autobahn.Connection({url: 'wss://crossbar.hackafe.net:7778/ws', realm: 'realm1'});
+        var sourceEl = document.getElementById("currentsource");
+        var previewEl = document.getElementById("preview");
+        var timeEl = document.getElementById("currenttime");
+        var progress = new ProgressBar.Line('#progress', {
+            strokeWidth: 100,
+        });
+        var connect = document.getElementById("connect");
+        var video = document.getElementById("program");
+        var notfound = document.getElementById("notfound");
+
+        function msToTime(s) {
+            // Pad to 2 or 3 digits, default is 2
+            function pad(n, z) {
+            z = z || 2;
+            return ('00' + n).slice(-z);
+            }
+
+            var ms = s % 1000;
+            s = (s - ms) / 1000;
+            var secs = s % 60;
+            s = (s - secs) / 60;
+            var mins = s % 60;
+            var hrs = (s - mins) / 60;
+
+            return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+        }
+
+        var source = "";
+        var state = "";
+        const videos = {
+            "Holding Loop": "magwest/Upload/Public_Raw/Copy of Holding_Loop.mp4",
+            "VP10_Conference_In_VR_Trailer_and_Info_Spot.mp4": "magwest/Upload/Public_Raw/VP10_Conference_In_VR_Trailer_and_Info_Spot.mp4",   
+            "VP11_Re-O-Ri_VR_Card_Game_Trailer.mp4": "magwest/Upload/Public_Raw/VP11_Re-O-Ri_VR_Card_Game_Trailer.mp4",
+            "VP12_Re-O-Ri_Info_Spot_Indie_Dev_Conference_Talk.mp4": "magwest/Upload/Public_Raw/VP12_Re-O-Ri_Info_Spot_Indie_Dev_Conference_Talk.mp4",
+            "VP13_Marketplace-MayeneDesign.mp4.mp4": "magwest/Upload/Public_Raw/VP13_Marketplace-MayeneDesign.mp4.mp4",
+            "VP14_Street Cleaner IndieGame MAG 6min 40sec.mp4": "magwest/Upload/Public_Raw/VP14_Street Cleaner IndieGame MAG 6min 40sec.mp4", 
+            "VP15_Marketplace-Alyruko.mkv": "magwest/Upload/Public_Raw/VP15_Marketplace-Alyruko.mkv",
+            "VP16_RJ_TeaserTrailer.mp4": "magwest/Upload/Public_Raw/VP16_RJ_TeaserTrailer.mp4",
+            "VP17_Play_Dirty_To_Win_GeekNights_20200918.mp4": "magwest/Upload/Public_Raw/VP17_Play_Dirty_To_Win_GeekNights_20200918.mp4",     
+            "VP18_The Arkadian - MAGWest 2020 Stream.mp4": "magwest/Upload/Public_Raw/VP18_The Arkadian - MAGWest 2020 Stream.mp4",
+            "VP19_Pokemon_Snap_A_Complete_History_09182020.mkv": "magwest/Upload/Public_Raw/VP19_Pokemon_Snap_A_Complete_History_09182020.mkv",
+            "VP1_Marketplace-HydeHermitStudio.mp4": "magwest/Upload/Public_Raw/VP1_Marketplace-HydeHermitStudio.mp4",
+            "VP20_2020_9_CodeRomanticTrailer.mp4": "magwest/Upload/Public_Raw/VP20_2020_9_CodeRomanticTrailer.mp4",
+            "VP21_MAGStockVR_Interstitial1.mp4": "magwest/Upload/Public_Raw/VP21_MAGStockVR_Interstitial1.mp4",
+            "VP22_MAGStockVR_Interstitial2_A_Friday_Surprise.mp4": "magwest/Upload/Public_Raw/VP22_MAGStockVR_Interstitial2_A_Friday_Surprise.mp4",
+            "VP23_MAGStockVR_Interstitial3_Twinkle_Twinkle.mp4": "magwest/Upload/Public_Raw/VP23_MAGStockVR_Interstitial3_Twinkle_Twinkle.mp4",
+            "VP24_MAGStockVR_Interstitial4_Constellations.mp4": "magwest/Upload/Public_Raw/VP24_MAGStockVR_Interstitial4_Constellations.mp4", 
+            "VP25_MAGStockVR_Interstitial5_FirdayLayingDownInFrontOfFire.mp4": "magwest/Upload/Public_Raw/VP25_MAGStockVR_Interstitial5_FirdayLayingDownInFrontOfFire.mp4",
+            "VP26_MAGStockVR_Interstitial6_LessFunThanABoxOfRocks.mp4": "magwest/Upload/Public_Raw/VP26_MAGStockVR_Interstitial6_LessFunThanABoxOfRocks.mp4",
+            "VP27_Marketplace-SketchCartel.MOV": "magwest/Upload/Public_Raw/VP27_Marketplace-SketchCartel.MOV",
+            "VP28_Marketplace-StudioKitsu.mp4": "magwest/Upload/Public_Raw/VP28_Marketplace-StudioKitsu.mp4",
+            "VP29_SuddCityAdventuresMagWestIndieArcade.mp4": "magwest/Upload/Public_Raw/VP29_SuddCityAdventuresMagWestIndieArcade.mp4",       
+            "VP2_Button_Masher_091020.mp4": "magwest/Upload/Public_Raw/VP2_Button_Masher_091020.mp4",
+            "VP30_Settling_For_Catan_09182020.mkv": "magwest/Upload/Public_Raw/VP30_Settling_For_Catan_09182020.mkv",
+            "VP31_Marketplace-StudioKitsu-UPDATE.mp4": "magwest/Upload/Public_Raw/VP31_Marketplace-StudioKitsu-UPDATE.mp4",
+            "VP32_ElisaMelendez_MAGWestPanel2020(1).mp4": "magwest/Upload/Public_Raw/VP32_ElisaMelendez_MAGWestPanel2020(1).mp4",
+            "VP33_MAGWest_Ohm-I.mp4": "magwest/Upload/Public_Raw/VP33_MAGWest_Ohm-I.mp4",
+            "VP34_manadream_CloudMiners_trailer_09202020.mp4": "magwest/Upload/Public_Raw/VP34_manadream_CloudMiners_trailer_09202020.mp4",   
+            "VP35_lostgenerationgames_darkstar_magwest_teaser.mp4": "magwest/Upload/Public_Raw/VP35_lostgenerationgames_darkstar_magwest_teaser.mp4",
+            "VP36_Typo Trauma Announcement Trailer.wmv": "magwest/Upload/Public_Raw/VP36_Typo Trauma Announcement Trailer.wmv",
+            "VP37_Starfarer_09202020.mkv": "magwest/Upload/Public_Raw/VP37_Starfarer_09202020.mkv",
+            "VP38_Kyozo_09272020.mp4": "magwest/Upload/Public_Raw/VP38_Kyozo_09272020.mp4",
+            "VP39_mark_cooper_jamspace_magwest_set.mp4": "magwest/Upload/Public_Raw/VP39_mark_cooper_jamspace_magwest_set.mp4",
+            "VP3_business pastel - magwest 2020.mp4": "magwest/Upload/Public_Raw/VP3_business pastel - magwest 2020.mp4",
+            "VP40_mark_coooper_driving_alone_extra_play_after_jamspace.mp4": "magwest/Upload/Public_Raw/VP40_mark_coooper_driving_alone_extra_play_after_jamspace.mp4",
+            "VP41_Bleeds_with_viz_v2.mp4": "magwest/Upload/Public_Raw/VP41_Bleeds_with_viz_v2.mp4",
+            "VP42_Crashfaster.mp4": "magwest/Upload/Public_Raw/VP42_Crashfaster.mp4",
+            "VP43_The Runaway Four - MAGWestn't v1.0.mp4": "magwest/Upload/Public_Raw/VP43_The Runaway Four - MAGWestn't v1.0.mp4",
+            "VP44_Airy_Connect_9-28-2020.mp4": "magwest/Upload/Public_Raw/VP44_Airy_Connect_9-28-2020.mp4",
+            "VP45_Cosplay Wrestling Federation_MagWest_2020.mp4": "magwest/Upload/Public_Raw/VP45_Cosplay Wrestling Federation_MagWest_2020.mp4",
+            "VP46_Crashfaster_v2.mp4": "magwest/Upload/Public_Raw/VP46_Crashfaster_v2.mp4",
+            "VP47_Pokemon_Panel_Censored.mp4": "magwest/Upload/Public_Raw/VP47_Pokemon_Panel_Censored.mp4",
+            "VP48_lostgenerationgames_darkstar_magwest_teaser_updated.mp4": "magwest/Upload/Public_Raw/VP48_lostgenerationgames_darkstar_magwest_teaser_updated.mp4",
+            "VP49_Business_Pastel_With_Viz.mp4": "magwest/Upload/Public_Raw/VP49_Business_Pastel_With_Viz.mp4",
+            "VP4_Super_Marcato_Bros._09172020.mp4": "magwest/Upload/Public_Raw/VP4_Super_Marcato_Bros._09172020.mp4",
+            "VP53_8BitJazzHeroes_1.mp4": "magwest/Upload/Public_Raw/VP53_8BitJazzHeroes_1.mp4",
+            "VP54_8BitJazzHeroes_2.mp4": "magwest/Upload/Public_Raw/VP54_8BitJazzHeroes_2.mp4",
+            "VP55_8BitJazzHeroes_3.mp4": "magwest/Upload/Public_Raw/VP55_8BitJazzHeroes_3.mp4",
+            "VP56_88Bit-PoolJump.mp4": "magwest/Upload/Public_Raw/VP56_88Bit-PoolJump.mp4",
+            "VP57_88Bit-FinalFantasy.mp4": "magwest/Upload/Public_Raw/VP57_88Bit-FinalFantasy.mp4",
+            "VP58_Consoles Street Fighter.mp4": "magwest/Upload/Public_Raw/VP58_Consoles Street Fighter.mp4",
+            "VP59_Consoles Tracking.mp4": "magwest/Upload/Public_Raw/VP59_Consoles Tracking.mp4",
+            "VP5_Anthropic_Studios_Way_of_Rhea_9152020.mov": "magwest/Upload/Public_Raw/VP5_Anthropic_Studios_Way_of_Rhea_9152020.mov",       
+            "VP60_Kobayashi.mp4": "magwest/Upload/Public_Raw/VP60_Kobayashi.mp4",
+            "VP61_DKAdventures.mp4": "magwest/Upload/Public_Raw/VP61_DKAdventures.mp4",
+            "VP62_Minibosses DoubleDragonTheme.mp4": "magwest/Upload/Public_Raw/VP62_Minibosses DoubleDragonTheme.mp4",
+            "VP63_Pikachu Hall.mp4": "magwest/Upload/Public_Raw/VP63_Pikachu Hall.mp4",
+            "VP64_Rave Stuff.mp4": "magwest/Upload/Public_Raw/VP64_Rave Stuff.mp4",
+            "VP65_Pikachu Rave.mp4": "magwest/Upload/Public_Raw/VP65_Pikachu Rave.mp4",
+            "VP66_SoulBros-MegaRan-1.mp4": "magwest/Upload/Public_Raw/VP66_SoulBros-MegaRan-1.mp4",
+            "VP67_SoulBros-MegaRan-2.mp4": "magwest/Upload/Public_Raw/VP67_SoulBros-MegaRan-2.mp4",
+            "VP68_SoulBros-MegaRan-Freestyle.mp4": "magwest/Upload/Public_Raw/VP68_SoulBros-MegaRan-Freestyle.mp4",
+            "VP69_Suteki.mp4": "magwest/Upload/Public_Raw/VP69_Suteki.mp4",
+            "VP6_SuddCityAdventuresTrailerFinal.mp4": "magwest/Upload/Public_Raw/VP6_SuddCityAdventuresTrailerFinal.mp4",
+            "VP70_flyers.MOV": "magwest/Upload/Public_Raw/VP70_flyers.MOV",
+            "VP71_katamari_dooter.mov": "magwest/Upload/Public_Raw/VP71_katamari_dooter.mov",
+            "VP72_Dacski_Final.mp4": "magwest/Upload/Public_Raw/VP72_Dacski_Final.mp4",
+            "VP73_biggest_fan.MOV": "magwest/Upload/Public_Raw/VP73_biggest_fan.MOV",
+            "VP74_MAGWire.MOV": "magwest/Upload/Public_Raw/VP74_MAGWire.MOV",
+            "VP76_MagWest_SNESology_Presentation.mkv": "magwest/Upload/Public_Raw/VP76_MagWest_SNESology_Presentation.mkv",
+            "VP78_MAGWest-2019-Retrospective-VIRTUAL2020.mp4": "magwest/Upload/Public_Raw/VP78_MAGWest-2019-Retrospective-VIRTUAL2020.mp4",   
+            "VP79_magwest ball roll 2021 alpha.mov": "magwest/Upload/Public_Raw/VP79_magwest ball roll 2021 alpha.mov",
+            "VP7_Street Cleaner The Video Game Trailer 3.mp4": "magwest/Upload/Public_Raw/VP7_Street Cleaner The Video Game Trailer 3.mp4",   
+            "VP82_TORIENA_10032020.mp4": "magwest/Upload/Public_Raw/VP82_TORIENA_10032020.mp4",
+            "VP84_B E A N.MOV": "magwest/Upload/Public_Raw/VP84_B E A N.MOV",
+            "VP87_TP.MOV": "magwest/Upload/Public_Raw/VP87_TP.MOV",
+            "VP88_MAGWets_Final.mp4": "magwest/Upload/Public_Raw/VP88_MAGWets_Final.mp4",
+            "VP8_Way Of Rhea Gameplay Teaser - New Character-1.m4v": "magwest/Upload/Public_Raw/VP8_Way Of Rhea Gameplay Teaser - New Character-1.m4v",
+            "VP9_BatbarianAllPlatformENSept16MagWest.mp4": "magwest/Upload/Public_Raw/VP9_BatbarianAllPlatformENSept16MagWest.mp4",
+            "VP89_West2020-MAGMeet-Promo-vid-VO.mp4": "magwest/Upload/Public_Raw/VP89_West2020-MAGMeet-Promo-vid-VO.mp4"
+        };
+
+        connection.onopen = function (session) {
+            console.log("Connected");
+            connect.style.display = "none";
+
+            function updateStatus(body) {
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString(body, "text/xml");
+                var programID = xmlDoc.getElementsByTagName('active')[0].childNodes[0].nodeValue;
+                var previewID = xmlDoc.getElementsByTagName('preview')[0].childNodes[0].nodeValue;
+                var inputs = xmlDoc.getElementsByTagName('input');
+                var program = undefined;
+                var preview = undefined;
+                for (var i=0; i<inputs.length; i++) {
+                    var input = inputs[i].attributes;
+                    if (input.number.value === programID) {
+                        program = input;
+                    }
+                    if (input.number.value === previewID) {
+                        preview = input;
+                    }
+                }
+
+                if (source != program.title.value) {
+                    source = program.title.value;
+                    console.log("Playing:" + source);
+                    console.log(program);
+                    if (program.type.value === "Video") {
+                        if (videos.hasOwnProperty(source)) {
+                            notfound.style.display = "none";
+                            video.src = "//command.pi2.cs.umbc.edu/" + videos[source];
+                        } else {
+                            notfound.style.display = "block";
+                        }
+                    } else if (program.type.value === "VideoList") {
+                        var sourceName = source.split(" - ")[1]
+                        if (videos.hasOwnProperty(sourceName)) {
+                            notfound.style.display = "none";
+                            video.src = "//command.pi2.cs.umbc.edu/" + videos[sourceName];
+                        } else {
+                            notfound.style.display = "block";
+                        }
+                    } else {
+                        video.src = "";
+                        notfound.style.display = "none";
+                    }
+                    video.loop = program.loop.value === "True" ? true : false;
+                }
+
+                if (state != program.state.value) {
+                    state = program.state.value;
+                    if (state === "Running") {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                }
+
+                if (state === "Running") {
+                    if (video.src != window.location) {
+                        if (Math.abs(video.currentTime - program.position.value / 1000) > 0.25) {
+                            console.log("Out of sync.");
+                            video.currentTime = program.position.value / 1000;
+                        }
+                        if (video.paused) {
+                            video.play();
+                        }
+                    }
+                }
+
+                sourceEl.innerHTML = program.title.value;
+                previewEl.innerHTML = "UP NEXT: " + preview.title.value + " (" + msToTime(preview.duration.value) + ")";
+                progress.set(program.position.value / program.duration.value);
+                timeEl.innerHTML = "-" + msToTime(program.duration.value - program.position.value) + " / " + msToTime(program.duration.value);
+            }
+
+            session.subscribe('com.vmixstatus', updateStatus);
+        };
+
+        connect.addEventListener('click', function conn() {
+            connection.open();
+        });
+    </script>
+  </body>
+</html>

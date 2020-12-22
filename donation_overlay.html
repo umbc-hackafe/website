@@ -1,0 +1,80 @@
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+        <style>
+            body {
+                width: 480px;
+                background-color: grey;
+            }
+            .label {
+                text-align: center;
+                font-size: 50px;
+                -webkit-text-stroke-width: 1px;
+                -webkit-text-stroke-color: white;
+                font-family: 'Fredoka One', cursive;
+            }
+            #amount {
+                font-size: 100px;
+            }
+        </style>
+    </head>
+    <body>
+        <img id="graphic" src=""></img>
+        <div id="text" class="label"></div>
+        <div id="amount" class="label"></div>
+        <script type="text/javascript">
+            var frame = 1000;
+            var text = "Mark Murnane";
+            var amount = 2000;
+            var toShow = [];
+            var shown = {};
+            setInterval(function() {
+                textel = document.getElementById("text");
+                amountel = document.getElementById("amount");
+                graphicel = document.getElementById("graphic");
+                if (frame > 900) {
+                    textel.innerHTML = "";
+                    amountel.innerHTML = "";
+                    graphicel.src = "";
+                } else {
+                    textel.innerHTML = text;
+                    var current = Math.min(amount, Math.log((frame+200) / 200)*amount);
+                    amountel.innerHTML = "$"+(current/100).toFixed(2);
+                }
+                if (frame > 1050) {
+                    if (toShow.length > 0) {
+                        var item = toShow.shift();
+                        shown[item[0]] = true;
+                        graphicel.src = "Donation_GIF.gif";
+                        frame = 0;
+                        text = item[2];
+                        amount = item[1];
+                    }
+                }
+                frame += 1;
+            }, 10);
+
+            setInterval(function() {
+                fetch("donations.json?time="+Date.now()).then(response => response.json()).then(data => {
+                    for (i=0; i<data.length; i++) {
+                        var row = data[i];
+                        var date = Date.parse(row[3] + " UTC");
+                        var now = Date.now();
+                        if ((now - date) < 60000) {
+                            if (!shown.hasOwnProperty(row[0])) {
+                                toShow.push([row[0], parseFloat(row[1])*100, row[2]]);
+                                shown[row[0]] = false;
+                            }
+                        }
+                    }
+                });
+            }, 1000);
+
+            document.addEventListener("click", function() {
+                el = document.getElementById("graphic");
+                el.src="Donation_GIF.gif";
+                frame = 0;
+            });
+        </script>
+    </body>
+</html>

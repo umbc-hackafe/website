@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>MAGStock Online!</title>
+    <script src="autobahn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.min.js"></script>
+    <script src="viewercontroller.js"></script>
+  </head>
+  <body>
+    <style>
+      .dot {
+        height: 25px;
+        width: 25px;
+        background-color: #f00;
+        border-radius: 50%;
+        display: block;
+        position: fixed;
+      }
+      .circle {
+        height: 10px;
+        width: 10px;
+        background-color: #0f0;
+        border-radius: 50%;
+        display: block;
+        position: fixed;
+      }
+    </style>
+    <div class="row w-100">
+      <div class="col-md-8 min-vh-100">
+        <div class="twitch-video h-75">
+          <iframe
+            src="https://player.twitch.tv/?channel=magfest"
+            frameborder="0"
+            scrolling="no"
+            height="100%"
+            width="100%">
+          </iframe>
+        </div>
+        <div class="row controller">
+          <div class="col">
+            <div id="leftjoy" style="width:100px;height:100px;margin-bottom:0px;position:relative;"></div>
+          </div>
+          <div class="col-8">
+            <div id="status"></div>
+            <div>
+              <p>Buttons are <b>A B X Y L R Z(Zl) C(Zr) Q(Lstick) E(Rstick) + - ↑ ↓ ← →</b></p>
+            </div>
+          </div>
+          <div class="col">
+            <div id="rightjoy" style="width:100px;height:100px;margin-bottom:0px;margin-left:auto;position:relative;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md">
+        <div class="visualizer" width="70%" style="display: block; margin-left: auto; margin-right: auto; margin-top: 10px;">
+          <img id="procon" width="100%" src="procon.webp"/>
+          <div id="buttons"></div>
+        </div>
+        <div class="twitch-chat">
+          <iframe
+            frameborder="0"
+            scrolling="no"
+            src="https://www.twitch.tv/embed/magfest/chat"
+            height="400px"
+            width="100%">
+          </iframe>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+  </body>
+</html>

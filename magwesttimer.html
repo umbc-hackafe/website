@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Playback Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/autobahn-js-built@0.11.1/autobahn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/1.0.0/progressbar.min.js"></script>
+  </head>
+  <body>
+    <h1 id="currentsource" style="font-size: 80px">Loading...</h1>
+    <h2 id="preview" style="font-size: 40px">Connection...</h2>
+    <h2 id="currenttime" style="font-size: 40px"></h2>
+    <div class="progress" id="progress" height="100px"></div>
+
+    <script type="application/javascript">
+        var connection = new autobahn.Connection({url: 'wss://crossbar.hackafe.net:7778/ws', realm: 'realm1'});
+        var sourceEl = document.getElementById("currentsource");
+        var previewEl = document.getElementById("preview");
+        var timeEl = document.getElementById("currenttime");
+        var progress = new ProgressBar.Line('#progress', {
+            strokeWidth: 100,
+        });
+
+        function msToTime(s) {
+            // Pad to 2 or 3 digits, default is 2
+            function pad(n, z) {
+            z = z || 2;
+            return ('00' + n).slice(-z);
+            }
+
+            var ms = s % 1000;
+            s = (s - ms) / 1000;
+            var secs = s % 60;
+            s = (s - secs) / 60;
+            var mins = s % 60;
+            var hrs = (s - mins) / 60;
+
+            return pad(hrs) + ':' + pad(mins) + ':' + pad(secs) + '.' + pad(ms, 3);
+        }
+
+        var source = "";
+        var state = "";
+
+        connection.onopen = function (session) {
+            console.log("Connected");
+
+            function updateStatus(body) {
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString(body, "text/xml");
+                var programID = xmlDoc.getElementsByTagName('active')[0].childNodes[0].nodeValue;
+                var previewID = xmlDoc.getElementsByTagName('preview')[0].childNodes[0].nodeValue;
+                var inputs = xmlDoc.getElementsByTagName('input');
+                var program = undefined;
+                var preview = undefined;
+                for (var i=0; i<inputs.length; i++) {
+                    var input = inputs[i].attributes;
+                    if (input.number.value === programID) {
+                        program = input;
+                    }
+                    if (input.number.value === previewID) {
+                        preview = input;
+                    }
+                }
+
+                sourceEl.innerHTML = program.title.value;
+                previewEl.innerHTML = "UP NEXT: " + preview.title.value + " (" + msToTime(preview.duration.value) + ")";
+                progress.set(program.position.value / program.duration.value);
+                timeEl.innerHTML = "-" + msToTime(program.duration.value - program.position.value) + " / " + msToTime(program.duration.value);
+            }
+
+            session.subscribe('com.vmixstatus', updateStatus);
+        };
+
+        connection.open();
+    </script>
+  </body>
+</html>
